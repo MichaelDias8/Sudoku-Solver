@@ -8,174 +8,100 @@ using namespace std;
 
 //GLOBAL VARIABLES AND CONSTS
 const int CAPACITY = 9;
-int backTrack = 0;
+bool backTracking = false;
 int row = 0;
-int column = 0;
+int column = -1;
 bool setOriginalNumToOneNextTurn = true;
 
 
 //FUNCTION DECLARATIONS
-void setStartingNums(char[2][CAPACITY][CAPACITY], bool[CAPACITY][CAPACITY]);
+void setStartingNums(char[CAPACITY][CAPACITY], bool[CAPACITY][CAPACITY]);
 //setStartingNums - Allows user to input starting numbers in to a position which they choose
 //@param board[2][CAPACITY][CAPACITY] - sudoku board data
 
-void printBoard(char[2][CAPACITY][CAPACITY]);
+void printBoard(char[CAPACITY][CAPACITY]);
 //printBoard - prints board
 //@pararm char board[CAPACITY][CAPACITY] - sudoku board data
 
-void solve(char[2][CAPACITY][CAPACITY], bool[CAPACITY][CAPACITY]);
+void solve(char[CAPACITY][CAPACITY], bool[CAPACITY][CAPACITY]);
 //solve - recursive function that controls everything
 //@pararm char board[CAPACITY][CAPACITY] - sudoku board data
 
-void getNumber(char[2][CAPACITY][CAPACITY], bool[CAPACITY][CAPACITY]);
-//getNumber - gets next number
-//@pararm char board[CAPACITY][CAPACITY] - sudoku board data
-
-void setSpot(char[2][CAPACITY][CAPACITY], bool[CAPACITY][CAPACITY]);
-//getSpot - gets next or previous spot based on backtrack bool
-//@pararm char board[CAPACITY][CAPACITY] - sudoku board data
-
-void testValues(char[2][CAPACITY][CAPACITY], bool[CAPACITY][CAPACITY]);
-//tryValues returns false if no value fits
-//@pararm char board[CAPACITY][CAPACITY] - sudoku board data
-
-bool solved(char[2][CAPACITY][CAPACITY]);
+bool solved(char[CAPACITY][CAPACITY]);
 //solved - tells if board has been solved
 //@pararm char board[CAPACITY][CAPACITY] - sudoku board data
 //@return bool - true if puzzle solved, false if not
 
-bool isLegal(char[2][CAPACITY][CAPACITY]);
+bool isLegal(char[CAPACITY][CAPACITY]);
 //isLegal - determines if the number that was just put in the current spot is legal
 //@pararm char board[CAPACITY][CAPACITY] - sudoku board data
 //@return bool - if it is legal or not
- void notOverRightable(char board[2][CAPACITY][CAPACITY]);
- //notOverRightable - does protocal for when program comes across a spot that isnt overRightable
- //@param char board[CAPACITY][CAPACITY] - sudoku board data
 
+void backTrack();
+//backTrack - moves the row and column pointers to the previous entry
+
+void forwardTrack();
+//forwardTrack - moves the row and column pointers to the next entry
+
+void increaseVal(char board[CAPACITY][CAPACITY]);
+//increaseVal - increases value of the entry indexed by 'row' and 'column'
+//@pararm char board[CAPACITY][CAPACITY] - sudoku board data
 
 int main(){
 
-    char board[2][CAPACITY][CAPACITY];
+    char board[CAPACITY][CAPACITY];
     bool overRightable[CAPACITY][CAPACITY];
 
     for(int i = 0; i < 9; i++){
         for(int f = 0; f < 9; f++){
-            board[0][i][f] = '0';
-            board[1][i][f] = '0';
+            board[i][f] = '0';
+            board[i][f] = '0';
             overRightable[i][f] = true;
         }
     }
 
     setStartingNums(board, overRightable);
 
-    solve(board, overRightable);
-
-    printBoard(board);
-    cout << endl;
-    cout << "Congratulations!! Your puzzle has been solved!!" << endl;
+    if(isLegal(board)){
+        solve(board, overRightable);
+        printBoard(board);
+        cout << endl;
+        cout << "Congratulations!! Your puzzle has been solved!!" << endl;
+        system("pause");
+    }else
+        cout << "The board entered is invalid";
 
 }
 
-void solve(char board[2][CAPACITY][CAPACITY], bool overRightable[CAPACITY][CAPACITY]){
+void solve(char board[CAPACITY][CAPACITY], bool overRightable[CAPACITY][CAPACITY]){
 
     while(!solved(board)){
-
-        setSpot(board, overRightable);
-
-        if(overRightable[row][column]){
-
-            getNumber(board, overRightable);
-
-            testValues(board, overRightable);
-
-        }else{
-            notOverRightable(board);
+        backTracking? backTrack() : forwardTrack();
+        if(backTracking && board[row][column] == '9')
+            backTracking = true;
+        else{
+            if(overRightable[row][column]){
+                backTracking = false;
+                //find and apply legal move if there is one. if there isn't backtrack
+                while(board[row][column] != '9'){
+                    increaseVal(board);
+                    if(isLegal(board)) break;
+                }
+                if(!isLegal(board)){
+                    backTracking = true;
+                    board[row][column] = '0';
+                }
+            }
         }
-
-        solve(board, overRightable);
-
-        }
-
-}
-
-void setSpot(char board[2][CAPACITY][CAPACITY], bool overRightable[CAPACITY][CAPACITY]){
-
-    if(backTrack == 1){
-        //go back 1 spot
-
-        if(column == 0){
-            column = 8;
-            row--;
-        }else{
-            column--;
-        }
-
-    }
-
-    if(backTrack == 0){
-        //go to next spot
-        //before this we need to store the number it has and set the proper used num s
-
-        if(column == 8){
-            column = 0;
-            row++;
-        }else{
-            column++;
-        }
-    }
-    //when backtrack is set to 2 it means keep the same spot and will keep looping through numbers
-
-    if(backTrack == 0){
-        if(board[1][row][column] == '0'){
-            board[1][row][column] = board[0][row][column];
-            setOriginalNumToOneNextTurn = true;
-
-        }
-
     }
 }
 
-void getNumber(char board[2][CAPACITY][CAPACITY], bool overRightable[CAPACITY][CAPACITY]){
-
-
-
-    if(board[0][row][column] == '9'){
-        board[0][row][column] = '1';
-    }else{
-        board[0][row][column]++;
-    }
-
-}
-
-void testValues(char board[2][CAPACITY][CAPACITY], bool overRightable[CAPACITY][CAPACITY]){
-
-    if(isLegal(board)){
-        backTrack = 0;
-    }else{
-        backTrack = 2;
-    }
-
-    //case for when no number is legal in that spot
-    //has to set backtrack to 1;
-
-    if(board[0][row][column] == board[1][row][column]){
-        backTrack = 1;
-        board[0][row][column] = '0';
-        board[1][row][column] = '0';
-    }
-
-    if(setOriginalNumToOneNextTurn){
-            board[1][row][column] = '1';
-    }
-    setOriginalNumToOneNextTurn = false;
-}
-
-bool solved(char board[2][CAPACITY][CAPACITY]){
+bool solved(char board[CAPACITY][CAPACITY]){
 
     for(int i = 0; i < CAPACITY; i++){
         for(int u = 0; u < CAPACITY; u++){
 
-            if(board[0][i][u] == '0'){
+            if(board[i][u] == '0'){
             return false;
             }
         }
@@ -191,202 +117,90 @@ char ZeroToSpaceKey(char character){
         return character;
 }
 
-void printBoard(char board[2][CAPACITY][CAPACITY]){
+void printBoard(char board[CAPACITY][CAPACITY]){
     cout << endl;
     for(int i = 0; i < CAPACITY; i++){
         cout << " ";
         for(int j = 0; j < CAPACITY; j++){
-            cout << ZeroToSpaceKey(board[0][i][j]) << " | ";
+            cout << ZeroToSpaceKey(board[i][j]) << " | ";
         }
         cout << "\n-----------------------------------" << endl;
 
     }
 }
 
-bool isLegal(char board[2][CAPACITY][CAPACITY]){
+bool isLegal(char board[CAPACITY][CAPACITY]){
 
-    char num = board[0][row][column];
-    int counter = 0;
-    int box;
+    int numOccurances[CAPACITY];
 
-    for(int i = 0; i < 9; i++){
+    //check that all columns contain unique elements
+    for(int icol = 0; icol < 9; icol++){
+        //clear numOccurances because moving to next col
+        for(int i = 0; i < 9; i++)
+            numOccurances[i] = 0;
 
-        if(board[0][row][i] == num){
-            counter++;
-        }
-        if(counter > 1){
-            return false;
-        }
-
-    }
-
-    counter = 0;
-
-    for(int o = 0; o < 9; o++){
-
-        if(board[0][o][column] == num){
-            counter++;
-        }
-        if(counter > 1){
-            return false;
+        //set numOccurances for the column icol
+        for(int i = 1; i < 10; i++){
+            for(int irow = 0; irow < 9; irow++){
+                if((board[irow][icol] - '0') == i)
+                    numOccurances[i-1]++;
+            }
         }
 
+        //make sure the column icol has no more than one occurance of a digit
+        for(int i = 0; i < 9; i++){
+            if(numOccurances[i] > 1)
+                return false;
+        }
     }
 
-    counter = 0;
+    //check that all columns contain unique elements
+    for(int irow = 0; irow < 9; irow++){
+        //clear numOccurances because moving to next col
+        for(int i = 0; i < 9; i++)
+            numOccurances[i] = 0;
 
-    if(row == 0 || row == 1 || row == 2){
-        if(column == 0 || column == 1 || column == 2){box = 0;}
-        if(column == 3 || column == 4 || column == 5){box = 1;}
-        if(column == 6 || column == 7 || column == 8){box = 2;}
-
-    }
-
-    if(row == 3 || row == 4 || row == 5){
-        if(column == 0 || column == 1 || column == 2){box = 3;}
-        if(column == 3 || column == 4 || column == 5){box = 4;}
-        if(column == 6 || column == 7 || column == 8){box = 5;}
-
-    }
-
-    if(row == 6 || row == 7 || row == 8){
-        if(column == 0 || column == 1 || column == 2){box = 6;}
-        if(column == 3 || column == 4 || column == 5){box = 7;}
-        if(column == 6 || column == 7 || column == 8){box = 8;}
-
-    }
-
-    //box has been set
-
-    switch(box){
-
-        case 0:
-
-            if(board[0][0][0] == num){counter++;}
-            if(board[0][0][1] == num){counter++;}
-            if(board[0][0][2] == num){counter++;}
-            if(board[0][1][0] == num){counter++;}
-            if(board[0][1][1] == num){counter++;}
-            if(board[0][1][2] == num){counter++;}
-            if(board[0][2][0] == num){counter++;}
-            if(board[0][2][1] == num){counter++;}
-            if(board[0][2][2] == num){counter++;}
-            break;
-
-        case 1:
-
-            if(board[0][0][3] == num){counter++;}
-            if(board[0][0][4] == num){counter++;}
-            if(board[0][0][5] == num){counter++;}
-            if(board[0][1][3] == num){counter++;}
-            if(board[0][1][4] == num){counter++;}
-            if(board[0][1][5] == num){counter++;}
-            if(board[0][2][3] == num){counter++;}
-            if(board[0][2][4] == num){counter++;}
-            if(board[0][2][5] == num){counter++;}
-            break;
-
-        case 2:
-
-            if(board[0][0][6] == num){counter++;}
-            if(board[0][0][7] == num){counter++;}
-            if(board[0][0][8] == num){counter++;}
-            if(board[0][1][6] == num){counter++;}
-            if(board[0][1][7] == num){counter++;}
-            if(board[0][1][8] == num){counter++;}
-            if(board[0][2][6] == num){counter++;}
-            if(board[0][2][7] == num){counter++;}
-            if(board[0][2][8] == num){counter++;}
-            break;
-
-        case 3:
-
-            if(board[0][3][0] == num){counter++;}
-            if(board[0][3][1] == num){counter++;}
-            if(board[0][3][2] == num){counter++;}
-            if(board[0][4][0] == num){counter++;}
-            if(board[0][4][1] == num){counter++;}
-            if(board[0][4][2] == num){counter++;}
-            if(board[0][5][0] == num){counter++;}
-            if(board[0][5][1] == num){counter++;}
-            if(board[0][5][2] == num){counter++;}
-            break;
-
-        case 4:
-
-            if(board[0][3][3] == num){counter++;}
-            if(board[0][3][4] == num){counter++;}
-            if(board[0][3][5] == num){counter++;}
-            if(board[0][4][3] == num){counter++;}
-            if(board[0][4][4] == num){counter++;}
-            if(board[0][4][5] == num){counter++;}
-            if(board[0][5][3] == num){counter++;}
-            if(board[0][5][4] == num){counter++;}
-            if(board[0][5][5] == num){counter++;}
-            break;
-
-        case 5:
-
-            if(board[0][3][6] == num){counter++;}
-            if(board[0][3][7] == num){counter++;}
-            if(board[0][3][8] == num){counter++;}
-            if(board[0][4][6] == num){counter++;}
-            if(board[0][4][7] == num){counter++;}
-            if(board[0][4][8] == num){counter++;}
-            if(board[0][5][6] == num){counter++;}
-            if(board[0][5][7] == num){counter++;}
-            if(board[0][5][8] == num){counter++;}
-            break;
-
-        case 6:
-
-            if(board[0][6][0] == num){counter++;}
-            if(board[0][6][1] == num){counter++;}
-            if(board[0][6][2] == num){counter++;}
-            if(board[0][7][0] == num){counter++;}
-            if(board[0][7][1] == num){counter++;}
-            if(board[0][7][2] == num){counter++;}
-            if(board[0][8][0] == num){counter++;}
-            if(board[0][8][1] == num){counter++;}
-            if(board[0][8][2] == num){counter++;}
-            break;
-
-        case 7:
-
-            if(board[0][6][3] == num){counter++;}
-            if(board[0][6][4] == num){counter++;}
-            if(board[0][6][5] == num){counter++;}
-            if(board[0][7][3] == num){counter++;}
-            if(board[0][7][4] == num){counter++;}
-            if(board[0][7][5] == num){counter++;}
-            if(board[0][8][3] == num){counter++;}
-            if(board[0][8][4] == num){counter++;}
-            if(board[0][8][5] == num){counter++;}
-            break;
-
-        case 8:
-
-            if(board[0][6][6] == num){counter++;}
-            if(board[0][6][7] == num){counter++;}
-            if(board[0][6][8] == num){counter++;}
-            if(board[0][7][6] == num){counter++;}
-            if(board[0][7][7] == num){counter++;}
-            if(board[0][7][8] == num){counter++;}
-            if(board[0][8][6] == num){counter++;}
-            if(board[0][8][7] == num){counter++;}
-            if(board[0][8][8] == num){counter++;}
-            break;
-
-    }
-
-    if(counter > 1){
-            return false;
+        //set numOccurances for the column icol
+        for(int i = 1; i < 10; i++){
+            for(int icol = 0; icol < 9; icol++){
+                if((board[irow][icol] - '0') == i)
+                    numOccurances[i-1]++;
+            }
         }
 
+        //make sure the column icol has no more than one occurance of a digit
+        for(int i = 0; i < 9; i++){
+            if(numOccurances[i] > 1)
+                return false;
+        }
+    }
+
+    //check that boxes contain unnique elements
+    for(int digit = 1; digit < 10; digit++){
+        for(int offset1 = 0; offset1 < 7; offset1 += 3){
+            for(int offset2 = 0; offset2 < 7; offset2 += 3){
+                //clear numOccurances because moving to next box
+                for(int i = 0; i < 9; i++)
+                    numOccurances[i] = 0;
+                //calculate numOccurances
+                for(int i = 0 + offset1; i < 3 + offset1; i++){
+                    for(int j = 0 + offset2; j < 3 + offset2; j++){
+                        if((board[i][j] - '0') == digit) numOccurances[digit-1]++;
+                    }
+                }
+
+                for(int i = 0; i < 9; i++){
+                    if(numOccurances[i] > 1)
+                        return false;
+                }
+            }
+        }
+    }
     return true;
+
 }
 
-void setStartingNums(char board[2][CAPACITY][CAPACITY], bool overRightable[CAPACITY][CAPACITY]){
+void setStartingNums(char board[CAPACITY][CAPACITY], bool overRightable[CAPACITY][CAPACITY]){
 
     cout << "The board look like this: \n" << endl;
     cout << "       [1] [2] [3] [4] [5] [6] [7] [8] [9] \n      -------------------------------------" << endl;
@@ -402,96 +216,92 @@ void setStartingNums(char board[2][CAPACITY][CAPACITY], bool overRightable[CAPAC
     cout << "row and column numbers are indicated, set the starting values: \n";
 
     bool quit = false;
+    char temp;
+
     while(!quit){
 
-        int y;
-        char temp;
-        cout << "Enter the row of the entry to set or enter q to quit\n";
-
+        int y = 's';
+        cout << "Enter the row of the entry to set or enter s to solve puzzle\n";
         while(!(cin >> y)){
             cin.clear();
             cin.ignore(123, '\n');
-            cout << "would you like to quit (y/n)";
+            cout << "solve? (y/n)\n";
             cin >> temp;
             if(temp == 'y'){
-                quit = true;
-                break;
+                 quit = true;
+                 break;
             }
-            cout << "you need to enter a digit or enter q to quit\n";
+
+            cin.clear();
+            cin.ignore(123, '\n');
+            cout << "You must enter a digit\n";
         }
         if(quit) break;
 
-        cout << "Enter the column of the entry to set or enter q to quit\n";
-
-        int x;
+        int x = 's';
+        cout << "Enter the column of the entry to set or enter s to solve\n";
         while(!(cin >> x)){
             cin.clear();
             cin.ignore(123, '\n');
-            cout << "would you like to quit (y/n). ";
-            cin.get(temp);
+            cout << "solve? (y/n)\n";
+            cin >> temp;
             if(temp == 'y'){
-                quit = true;
-                break;
+                 quit = true;
+                 break;
             }
-            cout << "you need to enter a digit or enter q to quit\n";
+
+            cin.clear();
+            cin.ignore(123, '\n');
+            cout << "You must enter a digit\n";
         }
         if(quit) break;
 
-        char val;
-        cout << "Enter a value to put in that spot: ";
+        int val;
+        cout << "Enter a value to put in that spot or enter s to solve\n";
         while(!(cin >> val)){
             cin.clear();
-            std::cin.ignore(123, '\n');
-            cout << "would you like to quit (y/n)";
+            cin.ignore(123, '\n');
+            cout << "solve? (y/n)\n";
             cin >> temp;
             if(temp == 'y'){
-                quit = true;
-                break;
+                 quit = true;
+                 break;
             }
-            cout << "Enter a digit to put in that spot: ";
-            cin >> val;
+
+            cin.clear();
+            cin.ignore(123, '\n');
+            cout << "You must enter a digit\n";
         }
 
-        board[0][y -1][x-1] = val;
-        overRightable[y-1][x-1] = false;
+        if(!quit){
+            char aChar = '0' + val;
+            board[y -1][x-1] = aChar;
+            overRightable[y-1][x-1] = false;
+        }
 
         cout << "The board with your entry added looks like this: ";
         printBoard(board);
 
     }
-
-    cout << "Sucess you have entered all of your starting numbers!!" << endl;
-
-
+    cout << endl;
 }
 
-void notOverRightable(char board[2][CAPACITY][CAPACITY]){
-
-    if(isLegal(board)){
-
-        if(backTrack == 1){
-            //do nothing just keep backtrask at 1
-        }
-
-        if(backTrack == 0){
-            //do nothing just keep backtrack at 0
-        }
-
-         if(backTrack == 2){
-            backTrack = 0;
-        }
-
-    }else{
-
-        if(backTrack == 1){
-            //doNothing
-        }
-
-        if(backTrack == 0){
-            backTrack = 1;
-        }
-    }
+void backTrack(){
+    if(column == 0){
+        row--;
+        column = 8;
+    }else
+        column--;
 }
 
+void forwardTrack(){
+    if(column == 8){
+        row++;
+        column = 0;
+    }else
+        column++;
+}
 
-
+void increaseVal(char board[CAPACITY][CAPACITY]){
+    board[row][column] += 1;
+}
